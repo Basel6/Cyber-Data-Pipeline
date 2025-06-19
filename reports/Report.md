@@ -66,7 +66,7 @@ Why is this suspicious?
 
 ---
 
-![Visuals](image-3.png)
+![Visuals](Images/image-3.png)
 *(This is the visualization from the notebook section where we plotted session duration outliers.)*
 
 ---
@@ -79,7 +79,7 @@ We used a method called **Local Outlier Factor (LOF)**, which helps find session
 
 This method successfully identified about **1% of the data** as potential outliers (anomalies), which may include unknown or new types of attacks. These sessions didn’t follow the normal patterns and might deserve further investigation.
 
-![Visuals](image.png)
+![Visuals](Images/image.png)
 We noticed some normal sessions were incorrectly flagged, but this is expected in unsupervised detection.
 
 ---
@@ -92,7 +92,7 @@ Clustering helps us group similar sessions together to find hidden patterns. We 
 
 We attempted to group sessions into the 5 categories: Normal, DoS, Probe, R2L, and U2R using **K-Means** (an unsupervised method). However, it didn’t work well due to data imbalance — some categories had very few samples.
 
-![Visuals](image-1.png)
+![Visuals](Images/image-1.png)
 **Issue**: Rare attacks (like U2R) were missed or misclassified.
 
 ---
@@ -109,7 +109,7 @@ This worked much better. The clustering method successfully identified:
 - **85% of normal sessions**
 - **98.6% of attacks**
 
-![Visuals](image-2.png)
+![Visuals](Images/image-2.png)
 This approach provided much clearer results and is suitable for detecting whether a session is an attack or not.
 
 ---

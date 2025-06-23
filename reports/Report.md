@@ -20,6 +20,8 @@ We examined the dataset, removed irrelevant features, and normalized the numeric
 
 We then reduced the number of features (columns) using a technique called PCA. This helped us keep only the most important information, making the analysis faster and clearer.
 
+![Unique Values](Images/imageUnique.png)
+
 ---
 
 ## Step 5: Abnormality Detection
@@ -111,6 +113,85 @@ This worked much better. The clustering method successfully identified:
 
 ![Visuals](Images/image-2.png)
 This approach provided much clearer results and is suitable for detecting whether a session is an attack or not.
+
+![Disturbutions](Images/imageCakes.png)
+
+---
+
+## Step 7: Segment Analysis
+
+We sliced our sessions four different ways to uncover simple patterns.
+
+---
+
+### 7.1 Normal vs Attack  
+
+![Normal-vs-ATK](Images/Normal-vs-Attack.png)
+
+- **Normal sessions:** 67 343  
+- **Attack sessions:** 58 630  
+- **What this tells us:** Nearly half of all sessions are flagged as attacks. This top-level split shows how much normal traffic we have to distinguish from malicious activity.  
+and we can see that **Attack** sessions move a lot **more data** on average
+
+---
+
+### 7.2 Attack Category Distribution  
+
+![Attack Category Distribution](Images/step7_attack_category.png)
+
+| Category | Count  |
+| -------- | -----: |
+| Normal   | 67 343 |
+| DoS      | 45 927 |
+| Probe    | 11 656 |
+| R2L      |    995 |
+| U2R      |     52 |
+
+- **What this tells us:**  
+  - **DoS** is the most common attack type (many small floods).  
+  - **Probe** (port scans) comes next.  
+  - **R2L/U2R** are rare, so they require special attention in detection.
+
+---
+
+### 7.3 Session Duration Segments  
+
+![Session Duration Segments](Images/step7_duration_segments.png)
+
+| Segment | Count   |
+| ------- | ------: |
+| Short   |       0 |
+| Normal  | 124 542 |
+| Long    |   1 431 |
+
+- **What this tells us:**  
+  - Almost all sessions are “normal” length.  
+  - A small number of **Long** sessions last hours, which often means bulk transfers or backdoor channels.
+
+---
+
+### 7.4 Total-Bytes Segments  
+
+![Total-Bytes Segments](Images/step7_bytes_segments.png)
+
+| Segment | Count   |
+| ------- | ------: |
+| Zero    | 49 112 |
+| Low     |  8 167 |
+| Medium  | 61 007 |
+| High    |  7 687 |
+
+- **What this tells us:**  
+  - **Zero-byte** sessions (≈ 49 K) are likely failed handshakes or metadata probes.  
+  - **Low-volume** sessions (≈ 8 k) are likley a small activity like a "Hello" text messege.  
+  - **Medium-volume** sessions (≈ 61 K) are typical user activity (web/email).  
+  - **High-volume** sessions (≈ 7.7 K) point to large downloads/uploads or data exfiltration.
+
+---
+
+> **Note:** The NSL-KDD data does **not** include timestamps, so we are unable to analyze any time-of-day or sequential patterns in these segments.
+
+---
 
 ---
 

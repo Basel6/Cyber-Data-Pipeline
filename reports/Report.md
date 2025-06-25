@@ -120,7 +120,7 @@ This approach provided much clearer results and is suitable for detecting whethe
 
 ## Step 7: Segment Analysis
 
-We sliced our sessions four different ways to uncover simple patterns.
+We sliced our sessions five different ways to uncover simple patterns.
 
 ---
 
@@ -189,9 +189,97 @@ and we can see that **Attack** sessions move a lot **more data** on average
 
 ---
 
+### 7. 5 Service‐Based Segments (Top 9 + Other)
+
+To understand which applications carry the bulk of our traffic, we grouped every session into one of the **nine most frequent** `service` types (e.g. HTTP, etc...) and lumped the rest into an **“Other”** category.
+![Session Counts by Service Type (Top 9 + Other)](Images/session_by_service_top9.png)
+
+| Service   | Sessions |
+|:----------|---------:|
+| HTTP      |   40 338  |
+| Private   |   21 853  |
+| domain_u  |    9 043  |
+| SMTP      |    7 313  |
+| ftp_data  |    6 860  |
+| eco_i     |    4 586  |
+| ecr_i     |    4 359  |
+| telnet    |    2 353  |
+| Other     |   26 191  |
+
+- **What this tells us:**  
+  - **Web traffic (HTTP)** accounts for nearly one‐third of all sessions.  
+  - The combined “Other” bucket (many low‐volume services) is almost as large as HTTP, so while it’s spread across many protocols, it still represents a major chunk of activity.  
+  - Prioritizing monitoring on these top services covers the majority of traffic, but we shouldn’t ignore the “Other” category.  
+
+---
+
 > **Note:** The NSL-KDD data does **not** include timestamps, so we are unable to analyze any time-of-day or sequential patterns in these segments.
 
 ---
+
+## Step 8: Natural Language Principles (Skipped)
+
+The NSL-KDD dataset contains only numeric values and fixed categorical codes (durations, byte counts, protocol/service names, flags, etc.). There is **no free-form text** to process, so we move on to the next step in the pipeline.  
+
+---
+
+## Step 9: Graphs
+
+### Feature Correlation Graphs
+
+To understand which of our measurements carry the same information, we draw a “feature‐correlation graph.”  Each node is one numeric feature; an edge connects two features whose **absolute Pearson correlation** exceeds a given threshold.  Correlation runs from –1 (perfect inverse) through 0 (no relationship) to +1 (perfect direct).
+
+#### Moderate-Strength Correlations (|corr| > 0.5)
+
+![Feature Correlation |corr| > 0.5](Images/feature_corr_05.png)
+
+- **What it shows:** Any two features with correlation above 0.5 (moderate to strong) are linked.  
+- **Why 0.5?**  
+  - A correlation > 0.5 means when one feature goes up, the other tends to rise too—at least half the variability is shared.  
+  - This “big picture” reveals all clusters of related metrics, helping us spot groups that could be combined.
+
+---
+
+#### Very‐Strong Correlations (|corr| > 0.8)
+
+![Feature Correlation |corr| > 0.8](Images/feature_corr_08.png)
+
+- **What it shows:** Only the edges where correlations exceed 0.8 (very tight relationships) remain.  
+- **Why 0.8?**  
+  - Values above 0.8 indicate near‐duplicate behavior—these features almost always move together.  
+  - In our modeling pipeline we will **drop** or **merge** one of each such pair to reduce redundancy and simplify the model without losing information.
+
+---
+
+### Attack Proportion by Service graph
+
+**What is a “Service”?**  
+In our dataset, a **service** is simply the type of application-level protocol used in a network session (for example, `http` for web traffic, `ftp` for file transfers, `smtp` for email, and many others).
+
+![Attack Proportion by Service (all services)](Images/attack_prop_all_services.png)
+
+This chart shows, for each service, the **percentage of its sessions** that were flagged as attacks.  
+
+- Bars near **100%** (e.g. many obscure or legacy protocols) mean every session of that service was malicious, these can likely be blocked outright.  
+- Bars near **0%** (e.g. `http`, `domain_u`, `smtp`) mean those services are almost always normal, with very little abuse.  
+- Services in the middle (e.g. `finger`, `telnet`, `ftp`) see a mix of benign and malicious use and may warrant closer monitoring or tighter controls.
+
+---
+
+### Protocol Type graph
+
+To understand which underlying network protocols carry our traffic, we counted how many sessions used each of the three protocols in NSL-KDD:
+
+![Protocol Type Breakdown](Images/protocol_breakdown.png)
+
+- **TCP** (Transmission Control Protocol): Reliable, connection-oriented traffic (e.g. web browsing, email).  
+- **UDP** (User Datagram Protocol): Faster, connectionless traffic (e.g. streaming, DNS lookups).  
+- **ICMP** (Internet Control Message Protocol): Control messages and simple “ping” checks.
+
+**Key takeaway:**  
+Most sessions use **TCP**, with smaller shares of **UDP** and **ICMP**. This tells us that the bulk of activity is standard, reliable traffic (web, email, file transfers), while lighter-weight or diagnostic traffic is much less common.  
+
+
 
 ---
 

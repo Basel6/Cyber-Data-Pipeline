@@ -374,3 +374,10 @@ This work demonstrates a **basic detection pipeline** for distinguishing “Norm
 
 This pipeline is a starting point—each deployment should be customized and regularly updated to keep pace with new traffic patterns and emerging attack types.
 
+---
+
+## Authorship
+
+This work was carried out by **Basel Shaer**, under the supervision of **Prof. Uri Itai**.
+
+---

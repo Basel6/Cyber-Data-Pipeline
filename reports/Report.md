@@ -279,13 +279,98 @@ To understand which underlying network protocols carry our traffic, we counted h
 **Key takeaway:**  
 Most sessions use **TCP**, with smaller shares of **UDP** and **ICMP**. This tells us that the bulk of activity is standard, reliable traffic (web, email, file transfers), while lighter-weight or diagnostic traffic is much less common.  
 
+---
 
+#### Weak Points
+
+- **Duplicate features**  
+  Some measurements (like `serror_rate`, `srv_serror_rate`, `dst_host_serror_rate`, `dst_host_srv_serror_rate`) all give the same information (correlation > 0.8). They will be removed to simplify the analysis.
+
+- **High-risk services**  
+  Certain services have attack rates over 85% (for example `private`, `ecr_i`, `eco_i`, and many at 100%). These services will be monitored more closely because almost every session on them is an attack.
+
+---
+
+## Step 10: Modeling
+
+Our goal in this step is to build a simple, reliable classifier that can look at a brand-new network session and decide, “Is this an attack or not?”
+
+So we will train a model to predict “Normal” vs. “Attack.”, which will be the first line of defense, quickly flag anything suspicious for deeper inspection.
+
+### LightGBM classifier
+
+We chose **LightGBM** as our final classifier because, after evaluating several algorithms, it delivered the best combination of accuracy and training speed on the NSL-KDD dataset.  
+As a tree-based ensemble, LightGBM naturally records how often each feature is used to split nodes (“split-count importance”), (see feature importance plot below).
+
+### Model Evaluation
+
+We evaluated our **LightGBM binary classifier** on the held-out test set (20% of the data; 25,195 samples).  
+Below are the main metrics and visualizations:
+
+- **Overall accuracy:** 99.9% (25,180 correct out of 25,195)  
+- **Misclassified samples:** 15
+
+### Precision / Recall / F1-Score
+
+| Class   | Precision | Recall | F1-Score | Support |
+|:-------:|:---------:|:------:|:--------:|:-------:|
+| Normal  | 0.999     | 1.000  | 0.999    | 13,469  |
+| Attack  | 0.999     | 0.999  | 0.999    | 11,726  |
+
+#### Understanding Precision, Recall & F1-Score
+
+- **Precision**  
+  - *“When the model flags a flow as an **Attack**, how often is it actually an attack?”*  
+  - For example, a precision of 0.999 means that out of 1,000 flows the model called “Attack,” 999 really were attacks (only 1 false alarm).
+
+- **Recall**  
+  - *“Out of all the real attacks in the data, how many did the model catch?”*  
+  - A recall of 1.000 for “Normal” means it correctly identified every normal flow, and 0.999 for “Attack” means it found 99.9% of the actual attacks (very few misses).
+
+- **F1-Score**  
+  - This is a single number that balances precision and recall.  
+  - It’s the harmonic mean of precision and recall, so a high F1 (0.999) tells us the model has both very few false alarms **and** very few missed attacks.
+
+### Confusion Matrix
+
+![alt text](Images/ConfusionMatrixModel.png)  
+
+- The model correctly classified 13,463 of 13,469 normal flows (6 false alarms) and 11,717 of 11,726 attacks (9 misses), yielding only 15 total misclassifications.
+
+### ROC Curve
+
+![alt text](Images/RocCurveModel.png)  
+
+- Our model can perfectly tell apart normal vs attack traffic, it catches almost every single attack while making almost no mistakes.
+
+### Feature Importance
+
+To see which fields the model relies on most, we plotted LightGBM’s **split-count importance** for *Top 20* features. The x-axis shows the raw number of times each feature was used to split across all trees (on a 0–3000 scale).
+
+![All Feature Importances](images/feature_importances.png)
+
+From the chart above, the top 5 features are:
+
+1. **scale__src_bytes** (~2,800 splits)  
+2. **scale__dst_host_srv_count** (~1,000 splits)  
+3. **scale__dst_bytes** (~950 splits)  
+4. **scale__dst_host_count** (~800 splits)  
+5. **scale__dst_host_diff_srv_rate** (~700 splits)  
+
+This means that **packet sizes** (`src_bytes`/`dst_bytes`) and **connection counts to the same destination host** are the strongest indicators of attack vs. normal traffic in our NSL-KDD setup.
 
 ---
 
 ## Summary
 
-- The dataset is rich and realistic, with known cyberattacks grouped into five types.
-- We identified abnormalities using LOF and visualized them.
-- Clustering directly into attack vs normal gives better results than clustering by specific attack types.
-- These findings help us understand patterns in network traffic and prepare for building a detection model later in the pipeline.
+This work demonstrates a **basic detection pipeline** for distinguishing “Normal” vs. “Attack” traffic on the NSL-KDD dataset. You can adapt this template to your own needs—add new features, swap models, or remove steps—depending on your project requirements.
+
+- **Dataset timestamp:** June 2025 snapshot of NSL-KDD  
+- **Model:** LightGBM gradient-boosted trees  
+- **Key takeaway:** ~99.9% accuracy with only 15 misclassifications out of 25,195 test flows  
+- **Reusability:**  
+  - Feel free to replace or extend any stage (preprocessing, feature selection, model type, hyperparameter tuning)  
+  - For production, **retrain periodically** on fresh or live data to maintain performance as network patterns evolve  
+
+This pipeline is a starting point—each deployment should be customized and regularly updated to keep pace with new traffic patterns and emerging attack types.
+

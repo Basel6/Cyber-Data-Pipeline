@@ -22,6 +22,107 @@ We then reduced the number of features (columns) using a technique called PCA. T
 
 ![Unique Values](Images/imageUnique.png)
 
+- **Correlation:**
+- Correlation is a single number between –1 and +1 that tells you how strongly and in what direction two numeric values tend to increase or decrease together.
+
+![alt text](Images/CorrPlot.png)
+
+- **Association:**
+- the goal here is to understand how categories like `service` or `attack type` influence numerical metrics such as `session length` or `data volume`.  
+
+- to understand the reuslts, here are few things you must know:  
+  - 1. `Correlation Ratio (η)`: is a number between 0 and 1 that tells us how much of the overall variation in a numeric measurement can be explained by the categories, if η = 0, the category has no impact; if η = 1, the category fully explains the differences.  
+  - 2. `ANOVA (Analysis of Variance)`: Checks whether the average values of a numeric measurement differ across the categories.
+    - **F-statistic (F):** Ratio of between-group variance to within-group variance. Higher means more difference across groups.  
+    - **p-value (p):** Probability that any observed differences happened by random chance. A small p (below 0.05) means the differences are statistically significant.
+
+---
+
+## Results by Pair
+
+For each pair, we list the correlation ratio η, the ANOVA F and p, followed by the boxplots on normal scale and on log-scale (to better see small vs. large values).
+
+---
+
+### 1. Service → Duration
+
+- **η = 0.233**  (service explains ~5.4% of duration variation)  
+- **F = 105.03**, **p ≈ 0**  (differences are highly significant)
+
+#### Linear-Scale Plot
+
+![Service vs Duration (Linear)](Images/service_duration_linear.png)
+
+#### Log-Scale Plot
+
+![Service vs Duration (Log)](Images/service_duration_log.png)
+
+**what we see:** Some services (like FTP) tend to have much longer sessions than web or DNS. On a regular scale most services look similarly short, but the log plot makes the long sessions clear.
+
+---
+
+### 2. Service → Total Bytes
+
+- **η = 0.023**  (service explains ~0.05% of data-volume variation)  
+- **F = 0.99**, **p = 0.506**  (no significant difference)
+
+#### Linear-Scale Plot
+
+![Service vs Total Bytes (Linear)](Images/service_bytes_linear.png)
+
+#### Log-Scale Plot
+
+![Service vs Total Bytes (Log)](Images/service_bytes_log.png)
+
+**what we see:** There is no clear pattern in how much data each service transfers—most services send similar amounts on average, and any tiny differences are not statistically significant.
+
+---
+
+### 3. Attack Category → Total Bytes
+
+- **η = 0.023**  (attack type explains ~0.05% of data-volume variation)  
+- **F = 16.68**, **p = 1.12e-13**  (small but statistically significant difference)
+
+#### Linear-Scale Plot
+
+![Attack Category vs Total Bytes (Linear)](Images/attack_bytes_linear.png)
+
+#### Log-Scale Plot
+
+![Attack Category vs Total Bytes (Log)](Images/attack_bytes_log.png)
+
+**what we see:** Different attack types send slightly different amounts of data, but the effect is very small. On a log scale you can see some attacks (e.g. DoS) tend to use more bandwidth.
+
+---
+
+### 4. Attack Category → Duration
+
+- **η = 0.222**  (attack type explains ~4.9% of duration variation)  
+- **F = 1632.17**, **p ≈ 0**  (differences highly significant)
+
+#### Linear-Scale Plot
+
+![Attack Category vs Duration (Linear)](Images/attack_duration_linear.png)
+
+#### Log-Scale Plot
+
+![Attack Category vs Duration (Log)](Images/attack_duration_log.png)
+
+**what we see:** Some attacks create very long or very short connections. For example, certain probe attacks are quick scans, while others like prolonged DoS sessions last much longer.
+
+---
+
+### 5. Protocol Type → SYN-Error Rate
+
+- **η = 0.300**  (protocol explains ~9% of error-rate variation)  
+- **F = 6232.26**, **p ≈ 0**  (differences highly significant)
+
+#### Linear-Scale Plot
+
+![Protocol vs SERROR Rate (Linear)](Images/protocol_serror_linear.png)
+
+**what we see:** SYN-error rates vary noticeably between protocols (e.g. TCP vs. UDP), with some protocols showing much higher error rates.
+
 ---
 
 ## Step 5: Abnormality Detection
